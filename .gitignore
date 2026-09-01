@@ -6,6 +6,13 @@ __pycache__/
 .venv/
 venv/
 
+# 运行时数据库（SQLite 由程序自动生成）
+backend/data/*.db
+
+# 前端依赖与构建产物
+frontend/node_modules/
+frontend/dist/
+
 # 操作系统文件
 Thumbs.db
 .DS_Store
@@ -13,3 +20,6 @@ Thumbs.db
 # 编辑器
 .vscode/
 .idea/
+
+# 本地临时配置
+pip_clean.conf

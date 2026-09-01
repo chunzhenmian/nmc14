@@ -23,3 +23,4 @@
 | 阶段 | 记录文件 | 状态 |
 | :--- | :--- | :--- |
 | 阶段二：数据准备 | [stage2_data_preparation.json](stage2_data_preparation.json) | ✅ 已更新（2026-08-30） |
+| 阶段三：详细开发（前端+后端） | [stage3_development.json](stage3_development.json) | ✅ 已更新（2026-09-01） |

@@ -55,7 +55,15 @@
             </el-row>
 
             <!-- 异常分值仪表 -->
-            <div ref="gaugeRef" class="gauge mt16"></div>
+            <div class="gauge-wrap mt16">
+              <div ref="gaugeRef" class="gauge"></div>
+              <div class="gauge-legend">
+                <span><i class="dot red"></i>高度异常 ≤ -0.35</span>
+                <span><i class="dot orange"></i>中度 -0.35~-0.20</span>
+                <span><i class="dot yellow"></i>轻度 -0.20~-0.10</span>
+                <span><i class="dot green"></i>正常 &gt; -0.10</span>
+              </div>
+            </div>
           </template>
         </el-card>
 
@@ -126,6 +134,7 @@ async function doCheck() {
   loading.value = true
   try {
     result.value = await api.anomalyCheck({ ...params })
+    await nextTick()   // 等待 v-if 渲染出仪表盘容器后再初始化 ECharts
     renderGauge()
     ElMessage.success('检测完成')
     await loadLogs()
@@ -144,19 +153,62 @@ async function loadLogs() {
 
 function renderGauge() {
   if (!result.value || !gaugeRef.value) return
+  // 容器尚未完成布局（宽为 0）时延迟一帧重试，避免 ECharts 初始化失败
+  if (gaugeRef.value.offsetWidth === 0) {
+    requestAnimationFrame(() => renderGauge())
+    return
+  }
   if (!gauge) gauge = echarts.init(gaugeRef.value)
+  else gauge.resize()
   const score = result.value.score
+  const isAnomaly = result.value.is_anomaly
+  // 量程 [-0.6, 0.3]，跨度 0.9；颜色分段按预警阈值换算为比例
+  // 红 ≤-0.35(0.2778)、橙 ≤-0.20(0.4444)、黄 ≤-0.10(0.5556)、绿 >-0.10
   gauge.setOption({
     series: [{
       type: 'gauge',
       min: -0.6, max: 0.3,
-      splitNumber: 6,
-      axisLine: { lineStyle: { color: [[0.5, '#f56c6c'], [0.8, '#e6a23c'], [1, '#67c23a']] } },
-      pointer: { length: '60%', width: 5 },
-      axisTick: { splitNumber: 5 },
-      detail: { formatter: '{value}', fontSize: 18 },
-      title: { offsetCenter: [0, '78%'], fontSize: 13 },
-      data: [{ value: score, name: '异常分值' }]
+      startAngle: 210, endAngle: -30,
+      radius: '70%',
+      center: ['50%', '50%'],
+      splitNumber: 9,
+      axisLine: {
+        roundCap: true,
+        lineStyle: {
+          width: 14,
+          color: [
+            [0.2778, '#f56c6c'],
+            [0.4444, '#e6a23c'],
+            [0.5556, '#f5d96b'],
+            [1, '#67c23a']
+          ]
+        }
+      },
+      pointer: { length: '60%', width: 4, itemStyle: { color: '#303133' } },
+      anchor: {
+        show: true, size: 10,
+        itemStyle: { color: '#303133', borderColor: '#fff', borderWidth: 2 }
+      },
+      axisTick: { length: 4, splitNumber: 1, lineStyle: { color: '#909399', width: 1 } },
+      splitLine: { length: 10, lineStyle: { color: '#606266', width: 2 } },
+      axisLabel: {
+        distance: 14, fontSize: 10, color: '#606266',
+        // 每隔 0.2 显示一个标签，避免顶部弧段标签拥挤重叠
+        formatter: (v) => {
+          const t = Math.round(v * 100)
+          return (t % 20 === 0 || t === 30) ? v.toFixed(1) : ''
+        }
+      },
+      title: { offsetCenter: [0, '78%'], fontSize: 12, color: '#909399' },
+      detail: {
+        valueAnimation: true,
+        offsetCenter: [0, '52%'],
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: isAnomaly ? '#f56c6c' : '#67c23a',
+        formatter: (v) => v.toFixed(4)
+      },
+      data: [{ value: score, name: '异常分值（越负越异常）' }]
     }]
   })
 }
@@ -189,5 +241,16 @@ onBeforeUnmount(() => {
 .info-label { font-size: 12px; color: #8492a6; margin-bottom: 8px; }
 .info-value { font-size: 20px; font-weight: 700; }
 .info-value small { font-size: 12px; font-weight: 400; color: #a0a8b4; }
-.gauge { height: 220px; }
+.gauge-wrap { display: flex; flex-direction: column; align-items: center; }
+.gauge { height: 240px; width: 100%; }
+.gauge-legend {
+  display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
+  margin-top: 4px; font-size: 12px; color: #606266;
+}
+.gauge-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.gauge-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot.red { background: #f56c6c; }
+.dot.orange { background: #e6a23c; }
+.dot.yellow { background: #f5d96b; }
+.dot.green { background: #67c23a; }
 </style>

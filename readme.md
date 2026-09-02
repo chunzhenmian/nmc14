@@ -100,17 +100,25 @@ cd frontend && npm install
 # 数据预处理（生成 data/processed/）
 python scripts/preprocess.py
 
-# 模型训练（生成 backend/models/artifacts/）
-python -m backend.train_models
+# 模型训练（生成 backend/models/artifacts/），两种方式等价
+cd backend
+python train_models.py        # 方式一：进入 backend 目录直接运行
+# 方式二：在项目根以模块方式运行 python -m backend.train_models
 ```
 
 > 仓库已内置预处理数据与训练好的模型，可直接运行系统，无需重复上述两步。
 
 ### 4.4 启动系统
 
+**方式一（推荐，一键启动）**：Windows 下直接双击项目根目录的 **`一键启动.bat`**，会自动开两个窗口分别运行前后端，并在约 6 秒后自动打开浏览器；双击 **`一键停止.bat`** 可按端口停止前后端。脚本会在后端依赖或前端依赖缺失时自动安装。
+
+**方式二（手动，分两个终端）**：
+
 ```bash
 # 终端 1：启动后端（默认 http://127.0.0.1:5000）
-python -m backend.app
+cd backend
+python app.py
+# 也可在项目根以模块方式启动：python -m backend.app（两种方式均已适配）
 
 # 终端 2：启动前端（默认 http://127.0.0.1:5173）
 cd frontend && npm run dev
@@ -121,7 +129,9 @@ cd frontend && npm run dev
 ### 4.5 自动化测试
 
 ```bash
+# 项目根运行
 python -m pytest backend/tests -v
+# 或进入 backend 目录运行：cd backend && python -m pytest tests -v
 ```
 
 当前 **11 项测试全部通过**（健康检查、排放预测、参数优化、异常检测、记录查询）。

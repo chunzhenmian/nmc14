@@ -160,6 +160,7 @@ async function doOptimize() {
       n_iterations: nIterations.value
     })
     buildTable()    // 生成参数对比表
+    await nextTick()  // 等 v-if 的图表容器挂载完成，否则 echarts 找不到节点
     renderChart()   // 画雷达图
     ElMessage.success('优化完成')
   } catch (e) {

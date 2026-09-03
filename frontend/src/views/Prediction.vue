@@ -146,6 +146,7 @@ async function doPredict() {
   loading.value = true                 // 进入加载状态
   try {
     result.value = await api.predict({ ...params })  // 展开 params 作为请求体提交
+    await nextTick()                    // 等 v-if 的图表容器挂载完成，否则 echarts 找不到节点
     renderChart()                      // 拿到结果后画雷达图
     ElMessage.success('预测完成')
   } catch (e) {

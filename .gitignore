@@ -25,5 +25,6 @@ Thumbs.db
 pip_clean.conf
 
 _ppt_work/
+_doc_work/
 # Office temp lock files
 ~$*
